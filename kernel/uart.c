@@ -72,7 +72,7 @@ uartinit(void)
   WriteReg(FCR, FCR_FIFO_ENABLE | FCR_FIFO_CLEAR);
 
   // enable transmit and receive interrupts.
-  WriteReg(IER, IER_TX_ENABLE | IER_RX_ENABLE);
+  //WriteReg(IER, IER_TX_ENABLE | IER_RX_ENABLE);
 
   initlock(&uart_tx_lock, "uart");
 }
@@ -143,19 +143,20 @@ uartstart()
       return;
     }
     
-    if((ReadReg(LSR) & LSR_TX_IDLE) == 0){
+    //if((ReadReg(LSR) & LSR_TX_IDLE) == 0){
       // the UART transmit holding register is full,
       // so we cannot give it another byte.
       // it will interrupt when it's ready for a new byte.
-      return;
-    }
+      //return;
+    //}
     
     int c = uart_tx_buf[uart_tx_r % UART_TX_BUF_SIZE];
     uart_tx_r += 1;
     
     // maybe uartputc() is waiting for space in the buffer.
-    wakeup(&uart_tx_r);
-    
+    //wakeup(&uart_tx_r);
+    while((ReadReg(LSR) & LSR_TX_IDLE) == 0);
+
     WriteReg(THR, c);
   }
 }
@@ -171,6 +172,16 @@ uartgetc(void)
   } else {
     return -1;
   }
+}
+
+// read characer from UART
+// spin wait if no input is there
+int
+uartgetc_sync(void)
+{
+  int c;
+  while ((c = uartgetc()) == -1);
+  return c;
 }
 
 // handle a uart interrupt, raised because input has

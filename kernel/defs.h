@@ -153,6 +153,7 @@ void            uartintr(void);
 void            uartputc(int);
 void            uartputc_sync(int);
 int             uartgetc(void);
+int             uartgetc_sync(void);
 
 // vm.c
 void            kvminit(void);
